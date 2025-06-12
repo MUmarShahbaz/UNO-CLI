@@ -15,6 +15,14 @@ public:
         divide_cards();
     }
 
+    void DRAW_CARD(List &PLAYER) {
+        draw_card(PLAYER);
+    }
+
+    void DISCARD(int card_index, List &PLAYER) {
+        discard_card(card_index, PLAYER);
+    }
+
 private:
     int get_random(std::mt19937& gen, int min, int max) {
         std::uniform_int_distribution<> distr(min, max);
@@ -93,10 +101,25 @@ private:
             CARDS[i].next = i + 1;
         }
     }
+
+    void draw_card(List &player_list) {
+        int player_start = player_list.start;
+        player_list.start = draw_pile.start;
+        draw_pile.start = CARDS[draw_pile.start].next;
+        CARDS[player_list.start].next = player_start;
+    }
+
+    void discard_card(int card_index, List &player_list) {
+        if (!player_list.search_index(card_index)) return;
+        if (player_list.remove(card_index)) {
+            CARDS[card_index].next = discard_pile.start;
+            discard_pile.start = card_index;
+        }
+    }
 };
 
 void print_entire_deck(UNO game) {
-    for (int i = 0; i < 4; i++) {std::cout << "Player " << (i+1) << ":\n"; game.players[i].print_with_index(); std::cout << "\n\n";}
+    for (int i = 0; i < game.no_players; i++) {std::cout << "Player " << (i+1) << ":\n"; game.players[i].print_with_index(); std::cout << "\n\n";}
     std::cout << "Discard Pile:\n";
     game.discard_pile.print_with_index();
     std::cout << "\n\nDraw Pile\n";
@@ -120,6 +143,13 @@ UNO start_game() {
 
 int main() {
     UNO uno = start_game();
+    uno.DRAW_CARD(uno.players[0]);
+    uno.DRAW_CARD(uno.players[0]);
+    uno.DRAW_CARD(uno.players[0]);
+    uno.DRAW_CARD(uno.players[0]);
+    uno.DISCARD(8, uno.players[1]);
+    uno.DISCARD(3, uno.players[0]);
+    uno.DISCARD(9, uno.players[1]);
     print_entire_deck(uno);
     return 0;
 }

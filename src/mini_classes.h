@@ -56,4 +56,27 @@ public:
             std::cout << "[" << index << "]\t" << container[index].card.text() << "\n";
         }
     }
+
+    bool search_index(int search_index) const {
+        int index = start;
+        do {
+            if (index == search_index) return true;
+            index = container[index].next;
+        } while (container[index].next != -1);
+        return false;
+    }
+
+    bool remove(int remove_index) {
+        if (remove_index == start) {start = container[remove_index].next; container[remove_index].next = -1; return true;}
+        int index = start;
+        Node* parent = nullptr;
+        do {
+            if (container[index].next == remove_index) { parent = &container[index]; break; }
+            index = container[index].next;
+        } while (container[index].next != -1);
+        if (parent == nullptr) return false;
+        parent->next = container[remove_index].next;
+        container[remove_index].next = -1;
+        return true;
+    }
 };
