@@ -1,5 +1,7 @@
 #include <string>
 #include <iostream>
+#include <vector>
+#include <unordered_set>
 
 enum class CardColor {
     Empty,
@@ -98,6 +100,56 @@ public:
     List(int START, Node (&arr)[108]) : start(START), container(arr) {}
     int start;
     Node (&container)[108];
+
+    int length() const {
+        if (start == -1) {return 0;}
+        int index = start;
+        int list_length = 1;
+        while (container[index].next != -1) {
+            index = container[index].next;
+            list_length++;
+        }
+        return list_length;
+    }
+
+    std::vector<int> indices() const {
+        std::vector<int> list_indices;
+        list_indices.reserve(length());
+
+        if (start == -1) {return list_indices;}
+        int index = start;
+        list_indices.push_back(index);
+        while (container[index].next != -1) {
+            index = container[index].next;
+            list_indices.push_back(index);
+        }
+        return list_indices;
+    }
+
+    std::vector<int> pointers() const {
+        std::vector<int> list_pointers;
+        list_pointers.reserve(length());
+
+        if (start == -1) {return list_pointers;}
+        int index = start;
+        list_pointers.push_back(container[index].next);
+        while (container[index].next != -1) {
+            index = container[index].next;
+            list_pointers.push_back(container[index].next);
+        }
+        return list_pointers;
+    }
+
+    void rebuild_list(std::vector<int> list_indices, std::vector<int> list_pointers) {
+        std::unordered_set<int> candidates(list_indices.begin(), list_indices.end());
+        for (int i = 0; i < list_indices.size(); i++) {
+            container[list_indices[i]].next = list_pointers[i];
+            if (list_pointers[i] != -1) {
+                candidates.erase(list_pointers[i]);
+            }
+        }
+        start = *candidates.begin();
+    }
 
     void print() const {
         if (start == -1) {std::cout << "No List present\n"; return;}
