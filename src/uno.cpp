@@ -35,19 +35,19 @@ private:
 
         // Colorless
         for (int i = 0; i < 8; i += 2) {
-            temp[i] = Card(13, "");
-            temp[i + 1] = Card(14, "");
+            temp[i] = Card(13, CardColor::None);
+            temp[i + 1] = Card(14, CardColor::None);
         }
 
         // Colored
         for (int i = 0; i < 4; i++) {
             // Prepare color
-            std::string current_color;
+            CardColor current_color;
             switch (i) {
-            case 0: current_color = "Red"; break;
-            case 1: current_color = "Yellow"; break;
-            case 2: current_color = "Green"; break;
-            case 3: current_color = "Blue"; break;
+            case 0: current_color = CardColor::Red; break;
+            case 1: current_color = CardColor::Yellow; break;
+            case 2: current_color = CardColor::Green; break;
+            case 3: current_color = CardColor::Blue; break;
             }
 
             // Calculate starting index for the current color
