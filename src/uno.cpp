@@ -1,5 +1,6 @@
 #include "mini_classes.h"
 #include <random>
+#include <cctype>
 
 class UNO {
 public:
@@ -15,15 +16,78 @@ public:
         divide_cards();
     }
 
-    void DRAW_CARD(List &PLAYER) {
-        draw_card(PLAYER);
-    }
+    int play() {
+        int order_of_turns = 1;
+        int current_player_number = 0;
+        List* current_player = &players[current_player_number];
+        int winner = -1;
 
-    void DISCARD(int card_index, List &PLAYER) {
-        discard_card(card_index, PLAYER);
+        while (winner == -1) {
+            std::cout << "\n\nLet the game, begin!!!!\n\n";
+            std::cout << "Player " << (current_player_number + 1) << "'s turn\n";
+            print_for(current_player);
+            std::cout << "[-1] Draw a Card and Play it (if possible)\n";
+            int card_to_play = -2;
+            do {
+                std::cout << "Write the index of the card to play : ";
+                std::cin >> card_to_play;
+                if (card_to_play == -1) { 
+                    draw_card(current_player);
+                    if (validate_play(current_player->start)) discard_card(current_player->start, current_player);
+                    break;
+                }
+                bool player_owns = current_player->search_index(card_to_play);
+                bool playable_card = validate_play(card_to_play);
+                if (player_owns && playable_card) {
+                    discard_card(card_to_play, current_player);
+                } else if (!player_owns) {
+                    std::cout << "Player doesn't own the card being played\n";
+                    card_to_play = -2;
+                } else {
+                    std::cout << "Card is not playable\n";
+                    card_to_play = -2;
+                }
+            } while (card_to_play == -2);
+            Card* played = &CARDS[discard_pile.start].card;
+            perform_action(played, order_of_turns, current_player_number);
+            current_player = &players[current_player_number];
+            winner = check_empty(current_player) ? current_player_number : -1;
+        }
+        return winner;
     }
 
 private:
+    void perform_action(Card* played, int& order_of_turns, int& current_player_number) {
+        if (played->reverse()) order_of_turns -= 2*order_of_turns;
+        current_player_number = (current_player_number + order_of_turns + no_players) % no_players;
+        if (played->skip()) current_player_number += order_of_turns;
+        if (played->draw_two()) {
+            draw_card(&players[current_player_number]);
+            draw_card(&players[current_player_number]);
+        }
+        if (played->draw_four()) {
+            draw_card(&players[current_player_number]);
+            draw_card(&players[current_player_number]);
+            draw_card(&players[current_player_number]);
+            draw_card(&players[current_player_number]);
+        }
+        if (played->wild() || played->draw_four()) {
+            char card_color;
+            do {
+                std::cout << "Enter which color to use [R, Y, G, B]: ";
+                std::cin >> card_color;
+                card_color = std::tolower(card_color);
+            } while (card_color != 'r' && card_color != 'y' && card_color != 'g' && card_color != 'b');
+
+            switch (card_color) {
+                case 'r': played->pseudo_color = PseudoCardColor::Red; break;
+                case 'y': played->pseudo_color = PseudoCardColor::Yellow; break;
+                case 'g': played->pseudo_color = PseudoCardColor::Green; break;
+                case 'b': played->pseudo_color = PseudoCardColor::Blue; break;
+            }
+        }
+    }
+
     int get_random(std::mt19937& gen, int min, int max) {
         std::uniform_int_distribution<> distr(min, max);
         return distr(gen);
@@ -102,19 +166,38 @@ private:
         }
     }
 
-    void draw_card(List &player_list) {
-        int player_start = player_list.start;
-        player_list.start = draw_pile.start;
+    void draw_card(List* player_list) {
+        if (check_empty(&draw_pile)) rebuild_draw();
+        int player_start = player_list->start;
+        player_list->start = draw_pile.start;
         draw_pile.start = CARDS[draw_pile.start].next;
-        CARDS[player_list.start].next = player_start;
+        CARDS[player_list->start].next = player_start;
     }
 
-    void discard_card(int card_index, List &player_list) {
-        if (!player_list.search_index(card_index)) return;
-        if (player_list.remove(card_index)) {
-            CARDS[card_index].next = discard_pile.start;
-            discard_pile.start = card_index;
-        }
+    void discard_card(int card_index, List* player_list) {
+        player_list->remove(card_index);
+        CARDS[card_index].next = discard_pile.start;
+        discard_pile.start = card_index;
+    }
+
+    bool validate_play(int card_index) {
+        Card play_card = CARDS[card_index].card;
+        Card discard_card = CARDS[discard_pile.start].card;
+        bool is_colorless = play_card.color == CardColor::None;
+        bool matches_color = play_card.color == discard_card.color || static_cast<int>(play_card.color) == static_cast<int>(discard_card.pseudo_color);
+        bool matches_number = play_card.number == discard_card.number;
+        bool validate = is_colorless || matches_color || matches_number;
+        return validate ? true : false;
+    }
+
+    void print_for(List* player_for) {
+        std::cout << "Last Card : " << CARDS[discard_pile.start].card.text() << "\n\nYour cards: \n";
+        player_for->print_with_index();
+    }
+
+    bool check_empty(List* empty_list) {
+        if (empty_list->start == -1) return true;
+        return false;
     }
 };
 
@@ -142,14 +225,9 @@ UNO start_game() {
 }
 
 int main() {
+    std::string buff;
     UNO uno = start_game();
-    uno.DRAW_CARD(uno.players[0]);
-    uno.DRAW_CARD(uno.players[0]);
-    uno.DRAW_CARD(uno.players[0]);
-    uno.DRAW_CARD(uno.players[0]);
-    uno.DISCARD(8, uno.players[1]);
-    uno.DISCARD(3, uno.players[0]);
-    uno.DISCARD(9, uno.players[1]);
-    print_entire_deck(uno);
+    std::cout << "Player " << (uno.play() + 1) << " has won!!!\nPress any key to close....";
+    std::cin >> buff;
     return 0;
 }
