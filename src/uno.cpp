@@ -1,5 +1,6 @@
 #include "mini_classes.h"
 #include <random>
+#include <algorithm>
 #include <cctype>
 
 class UNO {
@@ -94,13 +95,11 @@ private:
     }
 
     void prepare_and_shuffle() {
-        // Prepare
-        Card temp[108];
-
+        // Prepare Cards
         // Colorless
         for (int i = 0; i < 8; i += 2) {
-            temp[i] = Card(13, CardColor::None);
-            temp[i + 1] = Card(14, CardColor::None);
+            CARDS[i] = Node(Card(13, CardColor::None), -1);
+            CARDS[i + 1] = Node(Card(14, CardColor::None), -1);
         }
 
         // Colored
@@ -118,33 +117,20 @@ private:
             int start_index = i * 25 + 8;
 
             // Place a colored 0, There is only one 0 in each color
-            temp[start_index] = Card(0, current_color);
+            CARDS[start_index] = Node(Card(0, current_color), -1);
 
             // Place all other colored cards twice
             for (int j = 0; j < 2; j++) {
                 start_index += j * 12;
                 for (int k = 1; k <= 12; k++) {
-                    temp[k + start_index] = Card(k, current_color);
+                    CARDS[k + start_index] = Node(Card(k, current_color), -1);
                 }
             }
         }
 
         // Shuffle
-        Card Shuffled_Deck[108];
-        std::random_device rd;
-        std::mt19937 Generator(rd());
-
-
-        for (int i = 0; i < 108; i++) {
-            int card_index;
-            do {
-                card_index = get_random(Generator, 0, 107);
-            } while (temp[card_index].null);
-
-            CARDS[i] = Node(temp[card_index]);
-
-            temp[card_index] = Card();
-        }
+        std::mt19937 Generator(std::random_device{}());
+        std::shuffle(std::begin(CARDS), std::end(CARDS), Generator);
 
         draw_pile.start = 0;
     }
