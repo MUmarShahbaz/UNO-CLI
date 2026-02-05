@@ -45,17 +45,18 @@ public:
                     }
                     break;
                 }
-                bool player_owns = current_player->search_index(card_to_play);
-                bool playable_card = validate_play(card_to_play);
-                if (player_owns && playable_card) {
-                    discard_card(card_to_play, current_player);
-                    played = &CARDS[discard_pile.start].card;
-                } else if (!player_owns) {
+                int card_to_play_absolute_index = current_player->search_absolute(card_to_play);
+                if (card_to_play_absolute_index == -1) {
                     std::cout << "Player doesn't own the card being played\n";
                     card_to_play = -2;
                 } else {
-                    std::cout << "Card is not playable\n";
-                    card_to_play = -2;
+                    if (validate_play(card_to_play_absolute_index)) {
+                        discard_card(card_to_play_absolute_index, current_player);
+                        played = &CARDS[discard_pile.start].card;
+                    } else {
+                        std::cout << "Card is not playable\n";
+                        card_to_play = -2;
+                    }
                 }
             } while (card_to_play == -2);
             perform_action(played, order_of_turns, current_player_number);
@@ -182,7 +183,7 @@ private:
 
     void print_for(List* player_for) {
         std::cout << "Last Card : " << CARDS[discard_pile.start].card.text() << "\n\nYour cards: \n";
-        player_for->print_with_index();
+        player_for->print_with_relative_index();
     }
 
     bool check_empty(List* empty_list) {

@@ -171,6 +171,18 @@ public:
         }
     }
 
+    void print_with_relative_index() const {
+        if (start == -1) {std::cout << "No List present\n"; return;}
+        int index = start;
+        int i = 0;
+        std::cout << "[" << i << "]\t" << container[index].card.text() << "\n";
+        while (container[index].next != -1) {
+            index = container[index].next;
+            i++;
+            std::cout << "[" << i << "]\t" << container[index].card.text() << "\n";
+        }
+    }
+
     bool search_index(int search_index) const {
         int index = start;
         if (index == search_index) return true;
@@ -179,6 +191,19 @@ public:
             if (index == search_index) return true;
         } while (container[index].next != -1);
         return false;
+    }
+
+    int search_absolute(int relative_index) const {
+        if (start == -1) {std::cout << "No List present\n"; return -1;}
+        int index = start;
+        int i = 0;
+        if (relative_index == i) return index;
+        while (container[index].next != -1) {
+            index = container[index].next;
+            i++;
+            if (relative_index == i) return index;
+        }
+        return -1;
     }
 
     void remove(int remove_index) {
